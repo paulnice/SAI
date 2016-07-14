@@ -510,7 +510,7 @@ class switch_sai_rpcHandler : virtual public switch_sai_rpcIf {
       sai_attribute_t attr;
       sai_thrift_parse_port_attributes(thrift_attr_list, &attr, &buffer_profile_list);
       status = port_api->set_port_attribute((sai_object_id_t)port_id, &attr);
-      if (buffer_profile_list) free(buffer_profile_list); 
+      if (buffer_profile_list) free(buffer_profile_list);
       return status;
   }
 
@@ -1093,7 +1093,7 @@ class switch_sai_rpcHandler : virtual public switch_sai_rpcIf {
       port_list_object_attribute.value.objlist.list = (sai_object_id_t *) malloc(sizeof(sai_object_id_t) * max_ports);
       port_list_object_attribute.value.objlist.count = max_ports;
       switch_api->get_switch_attribute(1, &port_list_object_attribute);
-      std::map<int, sai_object_id_t> front_to_sai_map;      
+      std::map<int, sai_object_id_t> front_to_sai_map;
 
       for (int i=0 ; i<max_ports ; i++){
           port_lane_list_attribute.id = SAI_PORT_ATTR_HW_LANE_LIST;
@@ -1105,7 +1105,7 @@ class switch_sai_rpcHandler : virtual public switch_sai_rpcIf {
           for (int j=0 ; j<4 ; j++){
               port_lanes.insert(port_lane_list_attribute.value.u32list.list[j]);
           }
-          
+
           gPortMapIt = gPortMap.find(port_lanes);
           if (gPortMapIt != gPortMap.end()){
               std::string front_port_alias = gPortMapIt->second.c_str();
@@ -1165,7 +1165,7 @@ class switch_sai_rpcHandler : virtual public switch_sai_rpcIf {
               break;
           }
       }
- 
+
       std::set<int> lane_set;
       if (gPortMapIt != gPortMap.end()){
           lane_set = gPortMapIt->first;
@@ -1174,7 +1174,7 @@ class switch_sai_rpcHandler : virtual public switch_sai_rpcIf {
           printf("Didn't find matching port to received name!\n");
           return SAI_NULL_OBJECT_ID;
       }
-     
+
       max_port_attribute.id = SAI_SWITCH_ATTR_PORT_NUMBER;
       switch_api->get_switch_attribute(1, &max_port_attribute);
       max_ports = max_port_attribute.value.u32;
@@ -1193,7 +1193,7 @@ class switch_sai_rpcHandler : virtual public switch_sai_rpcIf {
           for (int j=0 ; j<4 ; j++){
               port_lanes.insert(port_lane_list_attribute.value.u32list.list[j]);
           }
-   
+
           if (port_lanes == lane_set){
               port_id = (sai_thrift_object_id_t) port_list_object_attribute.value.objlist.list[i];
               free(port_list_object_attribute.value.objlist.list);
@@ -1797,7 +1797,7 @@ class switch_sai_rpcHandler : virtual public switch_sai_rpcIf {
   }
 
   sai_thrift_object_id_t sai_thrift_create_scheduler_profile(const std::vector<sai_thrift_attribute_t> & thrift_attr_list) {
-      printf("sai_thrift_create_scheduler_profile\n");  
+      printf("sai_thrift_create_scheduler_profile\n");
       sai_status_t status = SAI_STATUS_SUCCESS;
       sai_scheduler_api_t *scheduler_api;
       sai_object_id_t scheduler_id = 0;
@@ -1824,7 +1824,7 @@ class switch_sai_rpcHandler : virtual public switch_sai_rpcIf {
       status = scheduler_api->remove_scheduler_profile((sai_object_id_t) scheduler_id);
       return status;
   }
-  
+
   void sai_thrift_parse_scheduler_attributes(const std::vector<sai_thrift_attribute_t> &thrift_attr_list, sai_attribute_t *attr_list) {
       std::vector<sai_thrift_attribute_t>::const_iterator it = thrift_attr_list.begin();
       sai_thrift_attribute_t attribute;
@@ -1964,12 +1964,12 @@ class switch_sai_rpcHandler : virtual public switch_sai_rpcIf {
       sai_attribute_t port_hw_lane;
       sai_thrift_attribute_t thrift_port_hw_lane;
       sai_u32_list_t *lane_list_num;
-  
+
       port_hw_lane.id = SAI_PORT_ATTR_HW_LANE_LIST;
       port_hw_lane.value.u32list.list = (uint32_t *) malloc(sizeof(uint32_t) * 4);
       port_hw_lane.value.u32list.count = 4;
       port_api->get_port_attribute(port_id, 1, &port_hw_lane);
-      
+
       thrift_attr_list.attr_count = 4;
       thrift_port_hw_lane.id = SAI_PORT_ATTR_HW_LANE_LIST;
       thrift_port_hw_lane.value.u32list.count = port_hw_lane.value.u32list.count;
@@ -1979,7 +1979,7 @@ class switch_sai_rpcHandler : virtual public switch_sai_rpcIf {
           lane_list.push_back((uint32_t) lane_list_num->list[index]);
       }
       attr_list.push_back(thrift_port_hw_lane);
-      free(port_hw_lane.value.u32list.list); 
+      free(port_hw_lane.value.u32list.list);
   }
 
   void sai_thrift_get_queue_stats(
@@ -2053,7 +2053,7 @@ class switch_sai_rpcHandler : virtual public switch_sai_rpcIf {
                              number_of_counters);
 
       free(counter_ids);
-      return status; 
+      return status;
   }
 
   sai_thrift_object_id_t sai_thrift_create_buffer_profile(const std::vector<sai_thrift_attribute_t> & thrift_attr_list) {
@@ -2283,6 +2283,54 @@ static void * switch_sai_thrift_rpc_server_thread(void *arg) {
   TSimpleServer server(processor, serverTransport, transportFactory, protocolFactory);
   server.serve();
   return 0;
+}
+
+extern std::map<std::set<int>, std::string> gPortMap;
+
+void handlePortMap(const std::string& portMapFile)
+{
+
+    if (portMapFile.size() == 0)
+        return;
+
+    std::ifstream portmap(portMapFile);
+
+    if (!portmap.is_open())
+    {
+        printf("failed to open port map file: %s : %s\n", portMapFile.c_str(), strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+
+    std::string line;
+
+    while(getline(portmap, line))
+    {
+        if (line.size() > 0 && (line[0] == '#' || line[0] == ';'))
+            continue;
+
+        size_t pos = line.find(" ");
+
+        if (pos == std::string::npos)
+        {
+            printf("not found ' ' in line %s\n", line.c_str());
+            continue;
+        }
+
+        std::string fp_value = line.substr(0, pos);
+        std::string lanes    = line.substr(pos + 1);
+        lanes.erase(lanes.begin(), std::find_if(lanes.begin(), lanes.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
+        std::istringstream iss(lanes);
+        std::string lane_str;
+        std::set<int> lane_set;
+
+        while (getline(iss, lane_str, ','))
+        {
+            int lane = stoi(lane_str);
+            lane_set.insert(lane);
+        }
+
+        gPortMap.insert(std::pair<std::set<int>,std::string>(lane_set,fp_value));
+    }
 }
 
 static pthread_t switch_sai_thrift_rpc_thread;

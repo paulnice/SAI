@@ -88,7 +88,7 @@ const char* test_profile_get_value(
         printf("variable is null\n");
         return NULL;
     }
-    
+
     std::map<std::string, std::string>::const_iterator it = gProfileMap.find(variable);
     if (it == gProfileMap.end())
     {
@@ -251,52 +251,6 @@ void handleProfileMap(const std::string& profileMapFile)
     }
 }
 
-void handlePortMap(const std::string& portMapFile)
-{
-
-    if (portMapFile.size() == 0)
-        return;
-
-    std::ifstream portmap(portMapFile);
-
-    if (!portmap.is_open())
-    {
-        printf("failed to open port map file: %s : %s\n", portMapFile.c_str(), strerror(errno));
-        exit(EXIT_FAILURE);
-    }
-
-    std::string line;
-
-    while(getline(portmap, line))
-    {
-        if (line.size() > 0 && (line[0] == '#' || line[0] == ';'))
-            continue;
-
-        size_t pos = line.find(" ");
-
-        if (pos == std::string::npos)
-        {
-            printf("not found ' ' in line %s\n", line.c_str());
-            continue;
-        }
-		 
-        std::string fp_value = line.substr(0, pos);		
-        std::string lanes    = line.substr(pos + 1);
-        lanes.erase(lanes.begin(), std::find_if(lanes.begin(), lanes.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
-        std::istringstream iss(lanes);
-        std::string lane_str;
-        std::set<int> lane_set;
-		
-        while (getline(iss, lane_str, ','))
-        {
-            int lane = stoi(lane_str);
-            lane_set.insert(lane);
-        }		 
-
-        gPortMap.insert(std::pair<std::set<int>,std::string>(lane_set,fp_value));     
-    }
-}
-
 int
 main(int argc, char* argv[])
 {
@@ -305,7 +259,7 @@ main(int argc, char* argv[])
     auto options = handleCmdLine(argc, argv);
     handleProfileMap(options.profileMapFile);
     handlePortMap(options.portMapFile);
-	
+
     sai_api_initialize(0, (service_method_table_t *)&test_services);
     sai_api_query(SAI_API_SWITCH, (void**)&sai_switch_api);
 
